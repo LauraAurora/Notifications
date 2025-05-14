@@ -1,17 +1,28 @@
 import hashlib
-import os
 import streamlit as st
-import requests
+from streamlit_lottie import st_lottie
+import json
+import os
+from utils.notification import send_notification_page
+from utils.schedule import show_schedule_page
+import os
+
+# --------------------------------------------------------------------
+# COSMETICS
+# --------------------------------------------------------------------
+json_path = os.path.join("assets", "wine.json")
+with open("assets/wine.json", "r") as f:
+    wine_lottie = json.load(f)
+
+
+# man_lottie_url = "https://raw.githubusercontent.com/LauraAurora/Lottie_Assets/main/Animation%20-%201747177633984.json"
+# man_lottie = load_lottie_url(man_lottie_url)
 
 # --------------------------------------------------------------------
 # CONFIG / SECRETS
-# --------------------------------------------------------------------
+# --------------------------------------------------------------------  
 def _secret(key, default=None):
     return st.secrets.get(key, default) if hasattr(st, "secrets") else os.getenv(key, default)
-
-APILIX_ENDPOINT = "https://api.apilix.com/send-notification"   # ← use exact path from docs
-APILIX_API_KEY  = _secret("APILIX_API_KEY", "")
-TEST_MODE       = _secret("TEST_MODE", "false").lower() == "true"           # True = simulate only
 
 ADMIN_USER      = _secret("ADMIN_USER")
 ADMIN_HASH      = _secret("ADMIN_PASS_HASH")
@@ -33,7 +44,7 @@ if "authenticated" not in st.session_state:
 # --------------------------------------------------------------------
 def login():
     st.title("Hi there, Zia!")
-    st.subheader("Please Login")
+    st.subheader("Login to send an Notification")
     
     user = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -41,56 +52,26 @@ def login():
     if st.button("Login"):
         pwd_hash = hashlib.sha256(password.encode()).hexdigest()
         if user == ADMIN_USER and pwd_hash == ADMIN_HASH:
+            st.success("Login successful! Loading your dashboard...")
             st.session_state.authenticated = True
-            st.success("Login successful!")
             st.rerun()
         else:
             st.error("Invalid username or password.")
+    
 
-
-# --------------------------------------------------------------------
-# NOTIFICATION PAGE
-# --------------------------------------------------------------------
-def send_notification():
-    st.title("Send Push Notification")
-
-    title = st.text_input("Notification Title")
-    message = st.text_area("Notification Message")
-
-    if st.button("Send Notification"):
-        if TEST_MODE:
-            st.success("TEST MODE ON - no call made.")
-            st.json({"title": title, "message": message})
-        else:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {APILIX_API_KEY}"
-            }
-            payload = {
-                "title": title,
-                "message": message,
-                "target": "allUsers"
-            }
-
-            try:
-                response = requests.post(APILIX_ENDPOINT, headers=headers, json=payload, timeout=10)
-                if response.ok:
-                    st.success("Notification sent to iOS and Android!")
-                else:
-                    st.error(f"Apilix error {response.status_code}: {response.text}")
-            except Exception as exc:
-                st.error(f"Request failed: {exc}")
-
-
-    if st.button("Logout"):
-        st.session_state.authenticated = False
-        st.rerun()
+    st_lottie(wine_lottie, height=300, key="wine-login-footer")
 
 
 # --------------------------------------------------------------------
 # MAIN ROUTER
 # --------------------------------------------------------------------
-if not st.session_state.authenticated:
-    login()
+if st.session_state.authenticated:
+    st.sidebar.title("Navigation")
+    page = st.sidebar.selectbox("Go to", ["Send Now", "Schedule"])
+
+    if page == "Send Now":
+        send_notification_page()
+    elif page == "Schedule":
+        show_schedule_page()
 else:
-    send_notification()
+    login()
