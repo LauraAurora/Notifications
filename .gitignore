@@ -1,0 +1,31 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+
+# Ignore virtual environment (common name is venv/)
+venv/
+env/
+.venv/
+ENV/
+
+# Ignore Streamlit secrets
+.streamlit/secrets.toml
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+get-pip.py
+
+# Ignore IDE/editor metadata
+.vscode/
+.idea/
+*.swp
+
+# Ignore CSV file
+scheduled.csv
+
+#Ignore README
+README.md
